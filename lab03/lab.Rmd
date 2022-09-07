@@ -1,0 +1,34 @@
+---
+title: "Lab 03"
+author: "ks"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Step 1. Read in the data
+First download and then read in with data.table:fread()
+
+```{r}
+if (!file.exists("met_all.gz")) {
+  download.file("https://raw.githubusercontent.com/USCbiostats/data-science-data/master/02_met/met_all.gz", 
+                "met_all.gz", method="libcurl", timeout = 60)
+}
+
+met <- data.table::fread("met_all.gz")
+```
+
+
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+plot(pressure)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
