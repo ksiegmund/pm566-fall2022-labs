@@ -15,7 +15,7 @@ First download and then read in with data.table:fread()
 ```{r}
 if (!file.exists("met_all.gz")) {
   download.file("https://raw.githubusercontent.com/USCbiostats/data-science-data/master/02_met/met_all.gz", 
-                "met_all.gz", method="libcurl", timeout = 60)
+                "met_all.gz", method="libcurl", timeout = 60)  
 }
 
 met <- data.table::fread("met_all.gz")
