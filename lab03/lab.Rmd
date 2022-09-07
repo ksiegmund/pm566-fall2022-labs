@@ -23,12 +23,48 @@ met <- data.table::fread("met_all.gz")
 
 
 
-## Including Plots
+## Step 2. Check the dimensions, headers, footers. How many columns, rows are there?
 
-You can also embed plots, for example:
 
-```{r pressure, echo=FALSE}
-plot(pressure)
+```{r }
+dim(met)
+head(met)
+tail(met)
+```
+## Step 3. Look at the variables
+
+```{r}
+str(met)
 ```
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+## Step 4. Take a closer look
+
+```{r}
+table(met$day)
+```
+
+```{r}
+table(met$year)
+```
+
+```{r}
+table(met$hour)
+```
+
+```{r}
+summary(met$temp)
+summary(met$wind.sp)
+```
+
+```{r}
+met[,summary(elev)]
+```
+
+Replace elevations with 9999 as NA.
+
+
+```{r}
+met[met$elev==9999.0] <- NA
+summary(met$elev)
+```
+
