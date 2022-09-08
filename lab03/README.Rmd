@@ -3,6 +3,7 @@ title: "Lab 03"
 author: "ks"
 date: "`r Sys.Date()`"
 output: github_document
+always_allow_html: true
 ---
 
 ```{r setup, include=FALSE}
