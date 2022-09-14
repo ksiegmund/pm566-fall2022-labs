@@ -20,7 +20,7 @@ library(data.table)
 ## Step 1. Read in the data
 First download and then read in with data.table:fread()
 
-```{r}
+```{r read-data, cache=TRUE}
 if (!file.exists("../lab03/met_all.gz")) {
   download.file("https://raw.githubusercontent.com/USCbiostats/data-science-data/master/02_met/met_all.gz", 
                 "met_all.gz", method="libcurl", timeout = 60)  
@@ -42,7 +42,7 @@ met <- met[temp > -17][elev == 9999.0, elev := NA]
 
 
 Generate a date variable using the functions as.Date() (hint: You will need the following to create a date paste(year, month, day, sep = "-")).
-```{r create-ymd}
+```{r create-ymd, cache = TRUE}
 met <- met[ ,  ymd := as.Date(paste(year, month, day, sep = "-"))]
 ```
 
@@ -84,14 +84,57 @@ met_avg <- met[, .(
 ```
 
 
-
 Create a region variable for NW, SW, NE, SE based on lon = -98.00 and lat = 39.71 degrees
+```{r}
+met_avg[, region := fifelse(lon >= -98 & lat > 39.71, "NE",
+                fifelse(lon < -98 & lat > 39.71, "NW",
+                fifelse(lon < -98 & lat <= 39.71, "SW","SE")))
+    ]
+table(met_avg$region)
+```
+
 Create a categorical variable for elevation as in the lecture slides
+```{r}
+met_avg[, elev_cat := fifelse(elev > 252, "high", "low")]
+```
+
+## 3. Make Violin plots of dew point temp by region
+
+```{r violin-dewpoint}
+met_avg[!is.na(region)] %>% 
+  ggplot() + 
+  geom_violin(mapping = aes(x = 1, y = dew.point,  color=region, fill = region)) + 
+  facet_wrap(~ region, nrow = 1)
+```
+
+The highest dew point temperatures are reported in the southeast.
 
 
+```{r violin-wind.sp}
+met_avg[!is.na(region) & !is.na(wind.sp)] %>% 
+  ggplot() + 
+  geom_violin(mapping = aes(x = 1, y = wind.sp,  color=region, fill = region)) + 
+  facet_wrap(~ region, nrow = 2)
+```
 
-Replace elevations with 9999 as NA.
+Say something about the result.
 
+## 4. Use geom_point with geom_smooth to examine the association between dew point temperature and wind speed by region
+Colour points by region
+Make sure to deal with NA category
+Fit a linear regression line by region
+Describe what you observe in the graph
+
+```{r scatterplot-dewpoint-wind.sp}
+met_avg[!is.na(region) & !is.na(wind.sp)] %>% 
+  ggplot(mapping = aes(x = wind.sp, y = dew.point)) + 
+  geom_point(mapping = aes(color = region)) + 
+  geom_smooth(method = lm, mapping = aes(linetype = region)) +
+  facet_wrap(~ region, nrow = 2)
+```
+
+
+Comment on these results.
 
 
 

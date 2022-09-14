@@ -135,7 +135,65 @@ met_avg <- met[, .(
 ```
 
 Create a region variable for NW, SW, NE, SE based on lon = -98.00 and
-lat = 39.71 degrees Create a categorical variable for elevation as in
-the lecture slides
+lat = 39.71 degrees
 
-Replace elevations with 9999 as NA.
+``` r
+met_avg[, region := fifelse(lon >= -98 & lat > 39.71, "NE",
+                fifelse(lon < -98 & lat > 39.71, "NW",
+                fifelse(lon < -98 & lat <= 39.71, "SW","SE")))
+    ]
+table(met_avg$region)
+```
+
+    ## 
+    ##  NE  NW  SE  SW 
+    ## 484 146 649 296
+
+Create a categorical variable for elevation as in the lecture slides
+
+``` r
+met_avg[, elev_cat := fifelse(elev > 252, "high", "low")]
+```
+
+## 3. Make Violin plots of dew point temp by region
+
+``` r
+met_avg[!is.na(region)] %>% 
+  ggplot() + 
+  geom_violin(mapping = aes(x = 1, y = dew.point,  color=region, fill = region)) + 
+  facet_wrap(~ region, nrow = 1)
+```
+
+![](README_files/figure-gfm/violin-dewpoint-1.png)<!-- -->
+
+The highest dew point temperatures are reported in the southeast.
+
+``` r
+met_avg[!is.na(region) & !is.na(wind.sp)] %>% 
+  ggplot() + 
+  geom_violin(mapping = aes(x = 1, y = wind.sp,  color=region, fill = region)) + 
+  facet_wrap(~ region, nrow = 2)
+```
+
+![](README_files/figure-gfm/violin-wind.sp-1.png)<!-- -->
+
+Say something about the result.
+
+## 4. Use geom_point with geom_smooth to examine the association between dew point temperature and wind speed by region
+
+Colour points by region Make sure to deal with NA category Fit a linear
+regression line by region Describe what you observe in the graph
+
+``` r
+met_avg[!is.na(region) & !is.na(wind.sp)] %>% 
+  ggplot(mapping = aes(x = wind.sp, y = dew.point)) + 
+  geom_point(mapping = aes(color = region)) + 
+  geom_smooth(method = lm, mapping = aes(linetype = region)) +
+  facet_wrap(~ region, nrow = 2)
+```
+
+    ## `geom_smooth()` using formula 'y ~ x'
+
+![](README_files/figure-gfm/scatterplot-dewpoint-wind.sp-1.png)<!-- -->
+
+Comment on these results.
