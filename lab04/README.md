@@ -205,13 +205,14 @@ Comment on these results.
 ``` r
  met_avg[!is.na(dew.point)] %>%
   ggplot(mapping = aes(x = region, y = dew.point)) + 
-    stat_summary(fun.data = mean_sdl, 
-                 geom = "errorbar")
+    stat_summary(fun.data = mean_sdl, geom = "pointrange") +
+    stat_summary(fun.data = mean_sdl, geom = "errorbar") 
 ```
 
 ![](README_files/figure-gfm/unnamed-chunk-4-1.png)<!-- -->
 
-I can show with means or with error bars, but I’d like to show both!
+To show means and error bars on the same plot, use two + stat_summary()
+commands!
 
 \##7. Generate a map of weather stations and show trend in relative
 humidity of top 10
@@ -238,8 +239,8 @@ rh.pal
     ##     }
     ##     pf(rescaled)
     ## }
-    ## <bytecode: 0x7f975f562c40>
-    ## <environment: 0x7f975f4aa8e8>
+    ## <bytecode: 0x7fa854545b30>
+    ## <environment: 0x7fa8545432a8>
     ## attr(,"colorType")
     ## [1] "numeric"
     ## attr(,"colorArgs")
@@ -256,6 +257,10 @@ top10rh <- met_avg[ rank(-rh) <= 10]
 ``` r
 #met_avg[ order(-rh)][1:10]
 ```
+
+Here I can use top10rh data subset to show just the weather stations
+that registered the top 10 relative humidity values in the 1st week of
+August. For now I’ll show all:
 
 ``` r
 rhmap <- leaflet(met_avg) %>% 
