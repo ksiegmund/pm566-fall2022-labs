@@ -197,3 +197,81 @@ met_avg[!is.na(region) & !is.na(wind.sp)] %>%
 ![](README_files/figure-gfm/scatterplot-dewpoint-wind.sp-1.png)<!-- -->
 
 Comment on these results.
+
+## 5. Use geom_bar to create barplots of the weather stations by elevation category coloured by region
+
+## 6. Use stat_summary to examine mean dew point and wind speed by region with standard deviation error bars
+
+``` r
+ met_avg[!is.na(dew.point)] %>%
+  ggplot(mapping = aes(x = region, y = dew.point)) + 
+    stat_summary(fun.data = mean_sdl, 
+                 geom = "errorbar")
+```
+
+![](README_files/figure-gfm/unnamed-chunk-4-1.png)<!-- -->
+
+I can show with means or with error bars, but I’d like to show both!
+
+\##7. Generate a map of weather stations and show trend in relative
+humidity of top 10
+
+``` r
+library(leaflet)
+# Generating a color palette
+rh.pal <- colorNumeric(c('darkgreen','goldenrod','brown'), domain=met_avg$rh)
+rh.pal
+```
+
+    ## function (x) 
+    ## {
+    ##     if (length(x) == 0 || all(is.na(x))) {
+    ##         return(pf(x))
+    ##     }
+    ##     if (is.null(rng)) 
+    ##         rng <- range(x, na.rm = TRUE)
+    ##     rescaled <- scales::rescale(x, from = rng)
+    ##     if (any(rescaled < 0 | rescaled > 1, na.rm = TRUE)) 
+    ##         warning("Some values were outside the color scale and will be treated as NA")
+    ##     if (reverse) {
+    ##         rescaled <- 1 - rescaled
+    ##     }
+    ##     pf(rescaled)
+    ## }
+    ## <bytecode: 0x7f975f562c40>
+    ## <environment: 0x7f975f4aa8e8>
+    ## attr(,"colorType")
+    ## [1] "numeric"
+    ## attr(,"colorArgs")
+    ## attr(,"colorArgs")$na.color
+    ## [1] "#808080"
+
+Use addMarkers to include the top 10 places in relative h (hint: this
+will be useful rank(-rh) \<= 10)
+
+``` r
+top10rh <- met_avg[ rank(-rh) <= 10]
+```
+
+``` r
+#met_avg[ order(-rh)][1:10]
+```
+
+``` r
+rhmap <- leaflet(met_avg) %>% 
+  # The looks of the Map
+  addProviderTiles('CartoDB.Positron') %>% 
+  # Some circles
+  addCircles(
+    lat = ~lat, lng=~lon,
+                                                  # HERE IS OUR PAL!
+    label = ~paste0(rh), color = ~ rh.pal(rh),
+    opacity = 1, fillOpacity = 1, radius = 500
+    ) %>%
+  # And a pretty legend
+  addLegend('bottomleft', pal=rh.pal, values=met_avg$rh,
+          title='Relative Humid.', opacity=1)
+rhmap
+```
+
+![](README_files/figure-gfm/unnamed-chunk-8-1.png)<!-- -->
