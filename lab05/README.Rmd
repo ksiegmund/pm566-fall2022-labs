@@ -172,7 +172,7 @@ repstation <- station_averages[ , .(
 
 
 ```{r}
-test <- merge(
+merge(
   x = station_averages,
   y = repstation,
   by.x = c("eucdist","STATE"),
@@ -180,5 +180,6 @@ test <- merge(
   all.x = FALSE,
   all.y = TRUE
 )
+
 ```
 
