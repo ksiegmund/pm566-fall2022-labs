@@ -138,6 +138,8 @@ statemeds<- station_averages[ , .(
 statemeds
 ```
 
+Now it turns out I've done this a very inefficient way (see an efficient approach in the answer to question Q3.)  BUT, it gives us practice with merging so I'll leave this for all to see.  Then, you will REALLY appreciate the shortcuts we could have taken when you get to Q3.
+
 ```{r}
 station_averages <- 
   merge(
@@ -175,7 +177,8 @@ Now I'll find the station with the lowest Euclidean distance to the median tempe
 (I should go back and add atmospheric pressure to answer the question completely, but this shows the steps to follow.)
 
 ```{r}
-merge(
+repweather <- 
+  merge(
   x = station_averages,
   y = repstation,
   by.x = c("eucdist","STATE"),
@@ -194,7 +197,83 @@ x <- c(1:5, NA)
 quantile(x, probs=0.5, na.rm=TRUE)
 ```
 
-## Question 3
+## Question 3: In the middle?
+For each state, identify what is the station that is closest to the mid-point of the state. Combining these with the stations you identified in the previous question, use leaflet() to visualize all ~100 points in the same figure, applying different colors for those identified in this question.
+
+Get station locations:
+
+```{r}
+met_stations <- unique(met[, .(USAFID, STATE, lon, lat)])
+nrow(met_stations)
+length(unique(met$USAFID))
+```
+
+I have more station locations than I have stations.  Some stations must have been moved at some point.  I will pick the locations from the earliest recording in the month.
+```{r}
+met_stations <- unique(met[order(USAFID,day,hour)][, .(USAFID, STATE, lon, lat)])
+met_stations[, n := 1:.N, by=USAFID]
+met_stations <- met_stations[n == 1][, n:= NULL]
+nrow(met_stations)
+```
+
+Now let's find the central location of these weather stations by state. To do this we compute the distance from each station to the central location, and grab the station with the smallest distance.
+
+```{r}
+met_stations[, lat_mid := quantile(lat, probs = .5, na.rm = TRUE), by=STATE]
+met_stations[, lon_mid := quantile(lon, probs = .5, na.rm = TRUE), by=STATE]
+# Looking at the euclidean distances
+met_stations[, dist := sqrt((lat-lat_mid)^2+(lon-lon_mid)^2)]
+met_stations[, mindist := which.min(dist), by=STATE]
+```
+
+Now let's create an index for each station by state, so we can pick the record that yielded the minimum distance.
+
+```{r grab-closest}
+met_stations[, n := 1:.N, by=STATE]
+met_stations[order(STATE,dist)]
+```
+
+Notice how min.dist == n for the station with the shortest distance in AL. We'll select these for each state, and just save the station id, state and location information.
+
+```{r}
+met_location <- met_stations[n == mindist, .(USAFID, STATE, lon, lat)][order(STATE)]
+met_location
+```
+
+Notice how there are only 48 states selected.  Using which.min will select *the first* occurrence, and therefore does not return multiple records per state if there are ties.
+
+Let's add these to the stations from the previous question and plot their locations on a map of the US. I'll use ggplot() this time for a static plot, instead of a dynamic plot in leaflet().
+
+First, get the locations for the stations from Q2.
+```{r}
+repweather <-
+  merge(
+  x =   repweather[, .(USAFID, STATE)],
+  y = met_stations[, .(USAFID, STATE, lat, lon)],
+  by.x = c("USAFID","STATE"),
+  by.y = c("USAFID","STATE"),
+  all.x = TRUE,
+  all.y = FALSE
+) 
+
+repweather[, station_type := "met"]
+met_location <- met_location[, .(USAFID, STATE, lat, lon)][, station_type := "loc"]
+all_stations <- rbind(repweather, met_location, use.names=TRUE)
+```
+
+
+```{r}
+# Visualizing the data
+ggplot(map_data("state"), aes(x = long, y = lat)) +
+  geom_map(aes(map_id = region), map = map_data("state"), col = "lightgrey", fill = "gray") +
+  geom_point(
+    data    = all_stations,
+    mapping = aes(x = lon, y = lat, col = station_type),
+    inherit.aes = FALSE, cex = 2, alpha = 0.5
+    )
+```
+
+The orange dots show the weather station most central to all locations in the state, and the aqua dots show those with weather most repesentative of the weather in the state. Most states have 2 dots.  In Florida, Kentucky, and West Virginia there is only 1 dot, and the color appears to be a mixture of the 2 colors in the legend, suggesting it's the same weather station that is centrally located and reporting the average weather for the state.
 
 
 ## Question 4: Means of means
