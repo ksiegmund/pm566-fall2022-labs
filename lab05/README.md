@@ -186,3 +186,153 @@ station_averages[ which.min(temp_dist50)]
     ## 1: 720458 23.68173 1.209682       NaN 0.002328907
 
 It matches the result above.
+
+# Question 2: Representative station per state
+
+Just like the previous question, you are asked to identify what is the
+most representative, the median, station per state. This time, instead
+of looking at one variable at a time, look at the euclidean distance. If
+multiple stations show in the median, select the one located at the
+lowest latitude.
+
+``` r
+station_averages <- 
+     met[ , .(
+       temp      = mean(temp, na.rm=T),
+       wind.sp   = mean(wind.sp, na.rm=T),
+       atm.press = mean(atm.press,na.rm=T)
+     ), by = .(USAFID,STATE)]
+head(station_averages)
+```
+
+    ##    USAFID STATE     temp  wind.sp atm.press
+    ## 1: 690150    CA 33.18763 3.483560  1010.379
+    ## 2: 720110    TX 31.22003 2.138348       NaN
+    ## 3: 720113    MI 23.29317 2.470298       NaN
+    ## 4: 720120    SC 27.01922 2.503079       NaN
+    ## 5: 720137    IL 21.88823 1.979335       NaN
+    ## 6: 720151    TX 27.57686 2.998428       NaN
+
+``` r
+statemeds<- station_averages[ , .(
+           temp50    = median(temp, na.rm=T), 
+           wind.sp50 = median(wind.sp, na.rm=T)
+            ), by = STATE]
+statemeds
+```
+
+    ##     STATE   temp50 wind.sp50
+    ##  1:    CA 22.66268  2.561738
+    ##  2:    TX 29.75188  3.413810
+    ##  3:    MI 20.51970  2.273423
+    ##  4:    SC 25.80545  1.696119
+    ##  5:    IL 22.43194  2.237652
+    ##  6:    MO 23.95109  2.453547
+    ##  7:    AR 26.24296  1.938625
+    ##  8:    OR 17.98061  2.011436
+    ##  9:    WA 19.24684  1.268571
+    ## 10:    GA 26.70404  1.497527
+    ## 11:    MN 19.63017  2.616482
+    ## 12:    AL 26.33664  1.662132
+    ## 13:    IN 22.25059  2.344333
+    ## 14:    NC 24.72953  1.627306
+    ## 15:    VA 24.37799  1.654183
+    ## 16:    IA 21.33461  2.680875
+    ## 17:    PA 21.69177  1.784167
+    ## 18:    NE 21.87354  3.192539
+    ## 19:    ID 20.56798  2.568944
+    ## 20:    WI 18.85524  2.053283
+    ## 21:    WV 21.94446  1.632107
+    ## 22:    MD 24.89883  1.883499
+    ## 23:    AZ 30.32372  3.074359
+    ## 24:    OK 27.14427  3.852697
+    ## 25:    WY 19.80699  3.873986
+    ## 26:    LA 27.87430  1.712535
+    ## 27:    KY 23.88844  1.895486
+    ## 28:    FL 27.57325  2.705069
+    ## 29:    CO 21.52650  3.098777
+    ## 30:    OH 22.02062  2.554138
+    ## 31:    NJ 23.47238  2.148058
+    ## 32:    NM 24.94447  3.776083
+    ## 33:    KS 24.21220  3.676997
+    ## 34:    ND 18.52849  3.956459
+    ## 35:    VT 18.61379  1.408247
+    ## 36:    MS 26.69258  1.637030
+    ## 37:    CT 22.36880  2.101294
+    ## 38:    NV 24.56293  3.035050
+    ## 39:    UT 24.35182  3.110795
+    ## 40:    SD 20.35662  3.665638
+    ## 41:    TN 24.88657  1.576035
+    ## 42:    NY 20.40674  2.304075
+    ## 43:    RI 22.53551  2.583469
+    ## 44:    MA 21.30662  2.710944
+    ## 45:    DE 24.56026  2.753082
+    ## 46:    NH 19.55054  1.563826
+    ## 47:    ME 18.79016  2.237210
+    ## 48:    MT 19.15492  4.151737
+    ##     STATE   temp50 wind.sp50
+
+``` r
+station_averages <- 
+  merge(
+  x = station_averages,
+  y = statemeds,
+  by.x = "STATE",
+  by.y = "STATE",
+  all.x = TRUE,
+  all.y = FALSE
+)
+```
+
+``` r
+station_averages[ , temp_dist_state50   := temp - temp50]
+station_averages[ , windsp_dist_state50 := wind.sp - wind.sp50] 
+station_averages
+```
+
+    ##       STATE USAFID     temp  wind.sp atm.press   temp50 wind.sp50
+    ##    1:    AL 720265 26.22064 1.136691       NaN 26.33664  1.662132
+    ##    2:    AL 720307 25.14605 1.624349       NaN 26.33664  1.662132
+    ##    3:    AL 720361 26.62228 1.343410  1015.275 26.33664  1.662132
+    ##    4:    AL 720362 27.26504 1.746168  1014.559 26.33664  1.662132
+    ##    5:    AL 720376 24.97884 1.296044       NaN 26.33664  1.662132
+    ##   ---                                                            
+    ## 1584:    WY 726667 23.10219 3.290873  1012.276 19.80699  3.873986
+    ## 1585:    WY 726690 20.51681 4.242981  1013.000 19.80699  3.873986
+    ## 1586:    WY 726700 19.97665 3.066306  1015.219 19.80699  3.873986
+    ## 1587:    WY 726710 16.86569 3.492218  1014.945 19.80699  3.873986
+    ## 1588:    WY 726720 21.70287 3.800334  1012.771 19.80699  3.873986
+    ##       temp_dist_state50 windsp_dist_state50
+    ##    1:        -0.1159996         -0.52544171
+    ##    2:        -1.1905914         -0.03778375
+    ##    3:         0.2856450         -0.31872221
+    ##    4:         0.9284033          0.08403570
+    ##    5:        -1.3577997         -0.36608819
+    ##   ---                                      
+    ## 1584:         3.2951940         -0.58311300
+    ## 1585:         0.7098198          0.36899535
+    ## 1586:         0.1696556         -0.80768036
+    ## 1587:        -2.9412986         -0.38176812
+    ## 1588:         1.8958786         -0.07365157
+
+``` r
+station_averages[ , eucdist := temp_dist_state50^2 +
+                                windsp_dist_state50^2]
+```
+
+``` r
+repstation <- station_averages[ , .(
+                    eucdist = min(eucdist, na.rm=T))
+                  , by=STATE]
+```
+
+``` r
+test <- merge(
+  x = station_averages,
+  y = repstation,
+  by.x = c("eucdist","STATE"),
+  by.y = c("eucdist","STATE"),
+  all.x = FALSE,
+  all.y = TRUE
+)
+```
