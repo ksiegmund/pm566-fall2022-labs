@@ -186,16 +186,12 @@ repweather <-
   all.x = FALSE,
   all.y = TRUE
 )
+repweather
 ```
 
 Phew! We found the stations with temperture and wind speed closest in Euclidean distance to the median temp and median wind speed in the state.
 
-Going back to read the directions once more, I realize I was supposed to use quantile() function instead of median().  The median is the 0.5 quantile or 50th percentile. We call it like this:
-
-```{r}
-x <- c(1:5, NA)
-quantile(x, probs=0.5, na.rm=TRUE)
-```
+Going back to read the directions once more, I realize I was supposed to use quantile() function instead of median().  We're asked to use it again in Q3 so read ahead to find how to use quantile() to find the median.
 
 ## Question 3: In the middle?
 For each state, identify what is the station that is closest to the mid-point of the state. Combining these with the stations you identified in the previous question, use leaflet() to visualize all ~100 points in the same figure, applying different colors for those identified in this question.
