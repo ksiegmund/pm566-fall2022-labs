@@ -170,6 +170,9 @@ repstation <- station_averages[ , .(
                   , by=STATE]
 ```
 
+Now I'll find the station with the lowest Euclidean distance to the median temperature and wind speed by merging these minimum distances back with the station names, and only saving the records that include the minimum Euclidean distance.
+
+(I should go back and add atmospheric pressure to answer the question completely, but this shows the steps to follow.)
 
 ```{r}
 merge(
@@ -180,6 +183,58 @@ merge(
   all.x = FALSE,
   all.y = TRUE
 )
-
 ```
 
+Phew! We found the stations with temperture and wind speed closest in Euclidean distance to the median temp and median wind speed in the state.
+
+Going back to read the directions once more, I realize I was supposed to use quantile() function instead of median().  The median is the 0.5 quantile or 50th percentile. We call it like this:
+
+```{r}
+x <- c(1:5, NA)
+quantile(x, probs=0.5, na.rm=TRUE)
+```
+
+## Question 3
+
+
+## Question 4: Means of means
+Using the quantile() function, generate a summary table that shows the number of states included, average temperature, wind-speed, and atmospheric pressure by the variable “average temperature level,” which you’ll need to create.
+
+Start by computing the states’ average temperature. Use that measurement to classify them according to the following criteria:
+
+low: temp < 20
+Mid: temp >= 20 and temp < 25
+High: temp >= 25
+
+
+```{r}
+met[, state_temp := mean(temp, na.rm = TRUE), by = STATE]
+met[, temp_cat := fifelse(
+  state_temp < 20, "low-temp", 
+  fifelse(state_temp < 25, "mid-temp", "high-temp"))
+  ]
+head(met)
+```
+
+Let's make sure that we don't have NAs
+
+```{r}
+table(met$temp_cat, useNA = "always")
+```
+
+Now, let's summarize.  (Not sure why the direction said to use the quantile function for this!)
+
+```{r}
+tab <- met[, .(
+  N_entries   = .N,
+  N_stations  = length(unique(USAFID)),
+  N_states    = length(unique(STATE)),
+  avg_temp    = mean(temp, na.rm = TRUE),
+  avg_wind.sp = mean(wind.sp, na.rm = TRUE),
+  avg_atm.pre = mean(atm.press, na.rm = TRUE)
+), by = temp_cat]
+
+knitr::kable(tab)
+```
+
+Note the call to the function kable() to make a 'pretty table' in markdown.

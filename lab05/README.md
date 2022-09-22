@@ -1,7 +1,7 @@
 Lab 05
 ================
 ks
-2022-09-21
+2022-09-22
 
 ``` r
 library(lubridate)
@@ -326,6 +326,14 @@ repstation <- station_averages[ , .(
                   , by=STATE]
 ```
 
+Now I’ll find the station with the lowest Euclidean distance to the
+median temperature and wind speed by merging these minimum distances
+back with the station names, and only saving the records that include
+the minimum Euclidean distance.
+
+(I should go back and add atmospheric pressure to answer the question
+completely, but this shows the steps to follow.)
+
 ``` r
 merge(
   x = station_averages,
@@ -439,3 +447,106 @@ merge(
     ## 48:       0.415773719        -0.255685285
     ## 49:      -0.817318253        -0.186739760
     ##     temp_dist_state50 windsp_dist_state50
+
+Phew! We found the stations with temperture and wind speed closest in
+Euclidean distance to the median temp and median wind speed in the
+state.
+
+Going back to read the directions once more, I realize I was supposed to
+use quantile() function instead of median(). The median is the 0.5
+quantile or 50th percentile. We call it like this:
+
+``` r
+x <- c(1:5, NA)
+quantile(x, probs=0.5, na.rm=TRUE)
+```
+
+    ## 50% 
+    ##   3
+
+## Question 3
+
+## Question 4: Means of means
+
+Using the quantile() function, generate a summary table that shows the
+number of states included, average temperature, wind-speed, and
+atmospheric pressure by the variable “average temperature level,” which
+you’ll need to create.
+
+Start by computing the states’ average temperature. Use that measurement
+to classify them according to the following criteria:
+
+low: temp \< 20 Mid: temp \>= 20 and temp \< 25 High: temp \>= 25
+
+``` r
+met[, state_temp := mean(temp, na.rm = TRUE), by = STATE]
+met[, temp_cat := fifelse(
+  state_temp < 20, "low-temp", 
+  fifelse(state_temp < 25, "mid-temp", "high-temp"))
+  ]
+head(met)
+```
+
+    ##    USAFID  WBAN year month day hour min  lat      lon elev wind.dir wind.dir.qc
+    ## 1: 690150 93121 2019     8   1    0  56 34.3 -116.166  696      220           5
+    ## 2: 690150 93121 2019     8   1    1  56 34.3 -116.166  696      230           5
+    ## 3: 690150 93121 2019     8   1    2  56 34.3 -116.166  696      230           5
+    ## 4: 690150 93121 2019     8   1    3  56 34.3 -116.166  696      210           5
+    ## 5: 690150 93121 2019     8   1    4  56 34.3 -116.166  696      120           5
+    ## 6: 690150 93121 2019     8   1    5  56 34.3 -116.166  696       NA           9
+    ##    wind.type.code wind.sp wind.sp.qc ceiling.ht ceiling.ht.qc ceiling.ht.method
+    ## 1:              N     5.7          5      22000             5                 9
+    ## 2:              N     8.2          5      22000             5                 9
+    ## 3:              N     6.7          5      22000             5                 9
+    ## 4:              N     5.1          5      22000             5                 9
+    ## 5:              N     2.1          5      22000             5                 9
+    ## 6:              C     0.0          5      22000             5                 9
+    ##    sky.cond vis.dist vis.dist.qc vis.var vis.var.qc temp temp.qc dew.point
+    ## 1:        N    16093           5       N          5 37.2       5      10.6
+    ## 2:        N    16093           5       N          5 35.6       5      10.6
+    ## 3:        N    16093           5       N          5 34.4       5       7.2
+    ## 4:        N    16093           5       N          5 33.3       5       5.0
+    ## 5:        N    16093           5       N          5 32.8       5       5.0
+    ## 6:        N    16093           5       N          5 31.1       5       5.6
+    ##    dew.point.qc atm.press atm.press.qc       rh CTRY STATE state_temp temp_cat
+    ## 1:            5    1009.9            5 19.88127   US    CA   22.36199 mid-temp
+    ## 2:            5    1010.3            5 21.76098   US    CA   22.36199 mid-temp
+    ## 3:            5    1010.6            5 18.48212   US    CA   22.36199 mid-temp
+    ## 4:            5    1011.6            5 16.88862   US    CA   22.36199 mid-temp
+    ## 5:            5    1012.7            5 17.38410   US    CA   22.36199 mid-temp
+    ## 6:            5    1012.7            5 20.01540   US    CA   22.36199 mid-temp
+
+Let’s make sure that we don’t have NAs
+
+``` r
+table(met$temp_cat, useNA = "always")
+```
+
+    ## 
+    ## high-temp  low-temp  mid-temp      <NA> 
+    ##    787619    423414   1106171         0
+
+Now, let’s summarize. (Not sure why the direction said to use the
+quantile function for this!)
+
+``` r
+tab <- met[, .(
+  N_entries   = .N,
+  N_stations  = length(unique(USAFID)),
+  N_states    = length(unique(STATE)),
+  avg_temp    = mean(temp, na.rm = TRUE),
+  avg_wind.sp = mean(wind.sp, na.rm = TRUE),
+  avg_atm.pre = mean(atm.press, na.rm = TRUE)
+), by = temp_cat]
+
+knitr::kable(tab)
+```
+
+| temp_cat  | N_entries | N_stations | N_states | avg_temp | avg_wind.sp | avg_atm.pre |
+|:----------|----------:|-----------:|---------:|---------:|------------:|------------:|
+| mid-temp  |   1106171 |        777 |       25 | 22.39909 |    2.354335 |    1014.384 |
+| high-temp |    787619 |        552 |       12 | 27.75392 |    2.521955 |    1013.739 |
+| low-temp  |    423414 |        259 |       11 | 18.96540 |    2.635315 |    1014.366 |
+
+Note the call to the function kable() to make a ‘pretty table’ in
+markdown.
