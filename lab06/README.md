@@ -162,7 +162,7 @@ mts %>%
 There are a lot of stopwords here, non-specific to medical text. We do
 see “patient”, phew!
 
-Question 3. Redo analysis in Q2, and remove stopwords.
+\##Question 3. Redo analysis in Q2, and remove stopwords.
 
 Redo visualization but remove stopwords first. Bonus points if you
 remove numbers as well
@@ -181,5 +181,101 @@ mts %>%
 
 ![](README_files/figure-gfm/unnamed-chunk-1-1.png)<!-- -->
 
-What do we see know that we have removed stop words? Does it give us a
-better idea of what the text is about?
+Removing the stopwords and numbers gives us a much better idea of what
+the text is about.
+
+## Question 4
+
+repeat question 2, but this time tokenize into bi-grams.
+
+``` r
+mts %>%
+  unnest_ngrams(bigram, transcription, n=2) %>%
+  count(bigram, sort = TRUE) %>%
+  top_n(20, n) %>%
+  ggplot(aes(n, fct_reorder(bigram, n))) +
+  geom_col()
+```
+
+![](README_files/figure-gfm/bigrams-transcription-1.png)<!-- -->
+
+``` r
+mts %>%
+  unnest_ngrams(trigram, transcription, n=3) %>%
+  count(trigram, sort = TRUE) %>%
+  top_n(20, n) %>%
+  ggplot(aes(n, fct_reorder(trigram, n))) +
+  geom_col()
+```
+
+![](README_files/figure-gfm/trigrams-transcription-1.png)<!-- -->
+
+Top 20 trigrams seemed to return a few more medical word group than
+bigrams.
+
+## Question 5
+
+Using the results you got from questions 4. Pick a word and count the
+words that appears after and before it.
+
+``` r
+ptbigram <-
+  mts %>%
+  unnest_ngrams(bigram, transcription, n=2) %>%
+  separate(bigram,into = c("word1", "word2"), sep = " ") %>%
+  select(word1, word2) %>%
+  filter(word1 == "patient" | word2 == "patient")
+```
+
+Words appearing before patient:
+
+``` r
+ptbigram %>%
+  filter(word2=="patient") %>%
+  count(word1, sort=TRUE) %>%
+  anti_join(stop_words, by = c("word1" = "word")) %>%
+  top_n(10) %>%
+knitr::kable()
+```
+
+    ## Selecting by n
+
+| word1       |   n |
+|:------------|----:|
+| history     | 101 |
+| procedure   |  32 |
+| female      |  26 |
+| sample      |  23 |
+| male        |  22 |
+| illness     |  16 |
+| plan        |  16 |
+| indications |  15 |
+| allergies   |  14 |
+| correct     |  11 |
+| detail      |  11 |
+
+Find the words following patient:
+
+``` r
+ptbigram %>%
+  filter(word1=="patient") %>%
+  count(word2, sort=TRUE) %>%
+  anti_join(stop_words, by = c("word2" = "word")) %>%
+  top_n(10) %>%
+knitr::kable()
+```
+
+    ## Selecting by n
+
+| word2      |   n |
+|:-----------|----:|
+| tolerated  | 994 |
+| denies     | 552 |
+| underwent  | 180 |
+| received   | 160 |
+| reports    | 155 |
+| understood | 113 |
+| lives      |  81 |
+| admits     |  69 |
+| appears    |  68 |
+| including  |  67 |
