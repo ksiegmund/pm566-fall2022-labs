@@ -153,3 +153,17 @@ ptbigram %>%
   top_n(10) %>%
 knitr::kable()
 ```
+
+## Question 6
+Which words are most used in each of the specialties. you can use group_by() and top_n() from dplyr to have the calculations be done within each specialty. Remember to remove stopwords. How about the most 5 used words?
+
+```{r top5-words-per-specialty, cache=TRUE}
+mts %>%
+  unnest_tokens(word, transcription) %>%
+  group_by(medical_specialty) %>% 
+  count(word, sort = TRUE) %>%
+  filter( !(word %in% stop_words$word) & !grepl(pattern = "^[0-9]+$", x = word)) %>%
+  top_n(5, n) %>%
+  arrange(medical_specialty, desc(n)) %>%
+ knitr::kable()
+```
