@@ -1,0 +1,59 @@
+---
+title: "Lab 06"
+author: "ks"
+date: "`r Sys.Date()`"
+output: github_document
+always_allow_html: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r install-libraries}
+library(tidytext)
+library(tidyverse)
+library(dplyr)
+library(ggplot2)
+library(forcats)
+```
+
+
+## Step 1. Read in the data
+First download and then read in with read.csv()
+
+```{r read-data, cache=TRUE}
+if (!file.exists("mtsamples.csv")) {
+  download.file("https://raw.githubusercontent.com/USCbiostats/data-science-data/master/00_mtsamples/mtsamples.csv", 
+                "mtsamples.csv", method="libcurl", timeout = 60)
+}
+
+mts <- read.csv("mtsamples.csv")
+str(mts)
+mts <- as_tibble(mts)
+mts
+```
+
+# Question 1: What specialties do we have?
+We can use count() from dplyr to figure out how many records are there per specialty? 
+
+```{r medical-specialties}
+specialties <- 
+    mts %>%
+    count(medical_specialty)
+
+specialties %>%
+    arrange(desc(n)) %>%
+knitr::kable()
+```
+
+There are `r nrow(specialties)` medical specialties.
+
+```{r barplot-of-specialty-counts}
+specialties %>%
+  top_n(10) %>%
+  ggplot(aes(x = n, y = fct_reorder(medical_specialty,n))) + 
+   geom_col()
+```
+
+The distribution is not at all uniform.
