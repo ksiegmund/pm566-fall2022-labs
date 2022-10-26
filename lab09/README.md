@@ -43,8 +43,8 @@ microbenchmark::microbenchmark(
 
     ## Unit: microseconds
     ##       expr     min       lq      mean   median        uq      max neval
-    ##     fun1() 455.097 696.9615 911.92398 845.8455 1039.1470 2013.136   100
-    ##  fun1alt()  28.827  34.8320  71.10711  39.2305   46.3715 2890.541   100
+    ##     fun1() 606.158 949.9295 1563.7676 1192.393 1698.6080 6811.954   100
+    ##  fun1alt()  29.487  49.1400  153.1602   55.682   66.7815 8872.820   100
 
 ``` r
 d <- matrix(1:16,ncol=4)
@@ -56,3 +56,162 @@ d
     ## [2,]    2    6   10   14
     ## [3,]    3    7   11   15
     ## [4,]    4    8   12   16
+
+``` r
+diag(d)
+```
+
+    ## [1]  1  6 11 16
+
+``` r
+d[2]
+```
+
+    ## [1] 2
+
+``` r
+d[2,1]
+```
+
+    ## [1] 2
+
+``` r
+d[c(1,6,11,16)]
+```
+
+    ## [1]  1  6 11 16
+
+``` r
+cbind(1:4,1:4)
+```
+
+    ##      [,1] [,2]
+    ## [1,]    1    1
+    ## [2,]    2    2
+    ## [3,]    3    3
+    ## [4,]    4    4
+
+``` r
+d[cbind(1:4,1:4)]
+```
+
+    ## [1]  1  6 11 16
+
+## Problem 3.
+
+Find the column max (hint: Checkout the function max.col()).
+
+``` r
+# Data Generating Process (10 x 10,000 matrix)
+set.seed(1234)
+M <- matrix(runif(12), ncol=4)
+M
+```
+
+    ##           [,1]      [,2]        [,3]      [,4]
+    ## [1,] 0.1137034 0.6233794 0.009495756 0.5142511
+    ## [2,] 0.6222994 0.8609154 0.232550506 0.6935913
+    ## [3,] 0.6092747 0.6403106 0.666083758 0.5449748
+
+``` r
+# Find each column's max value
+fun2 <- function(x) {
+  apply(x, 2, max)
+}
+fun2(x=M)
+```
+
+    ## [1] 0.6222994 0.8609154 0.6660838 0.6935913
+
+``` r
+fun2alt <- function(x) {
+  # YOUR CODE HERE
+
+   idx <- max.col( t(x))
+   x[cbind(idx,1:4)]
+}
+fun2alt(x=M)
+```
+
+    ## [1] 0.6222994 0.8609154 0.6660838 0.6935913
+
+``` r
+x <- matrix(rnorm(1e4), nrow=10)
+
+# Benchmarking
+microbenchmark::microbenchmark(
+  fun2(x),
+  fun2alt(x)
+)
+```
+
+    ## Unit: microseconds
+    ##        expr      min        lq      mean    median       uq       max neval
+    ##     fun2(x) 1667.885 2394.5605 4782.7267 3017.8810 4231.017 42652.489   100
+    ##  fun2alt(x)  201.721  319.1515  628.0499  397.5115  494.522  6024.882   100
+
+``` r
+library(parallel)
+
+
+my_boot <- function(dat, stat, R, ncpus = 1L) {
+  
+  # Getting the random indices
+  n <- nrow(dat)
+  idx <- matrix(sample.int(n, n*R, TRUE), nrow=n, ncol=R)
+ 
+  # Making the cluster using `ncpus`
+  # STEP 1: GOES HERE
+  
+  cl <- makePSOCKcluster(4)  
+  clusterSetRNGStream(cl, 123) # Equivalent to `set.seed(123)`
+
+  # STEP 2: GOES HERE
+  
+  clusterExport(cl,c("stat","dat","idx"),envir=environment())
+  
+  # STEP 3: THIS FUNCTION NEEDS TO BE REPLACES WITH parLapply
+  ans <- parLapply( cl,seq_len(R), function(i) {
+    stat(dat[idx[,i], , drop=FALSE])
+  })
+  
+  # Coercing the list into a matrix
+  ans <- do.call(rbind, ans)
+  
+  # STEP 4: GOES HERE
+  
+  ans
+  
+}
+```
+
+``` r
+# Bootstrap of an OLS
+my_stat <- function(d) coef(lm(y ~ x, data=d))
+
+# DATA SIM
+set.seed(1)
+n <- 500; R <- 1e4
+
+x <- cbind(rnorm(n)); y <- x*5 + rnorm(n)
+
+# Checking if we get something similar as lm
+ans0 <- confint(lm(y~x))
+ans1 <- my_boot(dat = data.frame(x, y), my_stat, R = R, ncpus = 2L)
+#stopCluster(cl)
+
+# You should get something like this
+t(apply(ans1, 2, quantile, c(.025,.975)))
+```
+
+    ##                   2.5%      97.5%
+    ## (Intercept) -0.1386903 0.04856752
+    ## x            4.8685162 5.04351239
+
+``` r
+ans0
+```
+
+    ##                  2.5 %     97.5 %
+    ## (Intercept) -0.1379033 0.04797344
+    ## x            4.8650100 5.04883353
