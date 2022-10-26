@@ -99,6 +99,8 @@ microbenchmark::microbenchmark(
 )
 ```
 
+## Problem 4. Show PSOCK cluster example  
+
 ```{r}
 library(parallel)
 
