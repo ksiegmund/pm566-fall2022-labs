@@ -9,16 +9,22 @@ always_allow_html: true
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+options(repos = c(CRAN = "http://cran.rstudio.com"))
+```
+
+
+
+```{r}
+if (!require(RSQLite)) install.packages(c("RSQLite"))
+if (!require(DBI))     install.packages(c("DBI"))
+
+library(RSQLite)
+library(DBI)
 ```
 
 # Data setup
 
 ```{r}
-# install.packages(c("RSQLite", "DBI"))
-
-library(RSQLite)
-library(DBI)
-
 # Initialize a temporary in memory database
 con <- dbConnect(SQLite(), ":memory:")
 
@@ -65,6 +71,7 @@ dbGetQuery(con,"
 SELECT   actor_id, first_name, last_name
 FROM    actor
 ORDER by last_name, first_name
+LIMIT 15
            ")
 ```
 
@@ -75,6 +82,21 @@ SELECT   actor_id, first_name, last_name
 FROM    actor
 ORDER by last_name, first_name
 ```
+
+# Exercise 2
+
+Retrive the actor ID, first name, and last name for actors whose last name equals ‘WILLIAMS’ or ‘DAVIS’.
+
+```{r}
+dbGetQuery(con,"
+SELECT   actor_id, first_name, last_name
+FROM    actor
+WHERE last_name IN ('WILLIAMS', 'DAVIS')
+ORDER BY last_name
+")
+```
+
+
 
 ```{r}
 # clean up
