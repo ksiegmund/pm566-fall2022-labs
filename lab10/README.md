@@ -450,6 +450,73 @@ The following query calculates a number of summary statistics for the
 payment table using MAX, MIN, AVG and SUM
 
 ``` r
+dbGetQuery(con,"
+SELECT MAX(amount) AS maxpayment,
+       MIN(amount) AS minpayment,
+       AVG(amount) AS avgpayment,
+       SUM(amount) AS sumpayment
+FROM payment
+")
+```
+
+    ##   maxpayment minpayment avgpayment sumpayment
+    ## 1      11.99       0.99   4.169775    4824.43
+
+## 7.1 Modify the above query to do those calculations for each customer_id
+
+``` r
+dbGetQuery(con,"
+SELECT customer_id,
+       MAX(amount) AS maxpayment,
+       MIN(amount) AS minpayment,
+       AVG(amount) AS avgpayment,
+       SUM(amount) AS sumpayment
+FROM payment
+GROUP BY customer_id
+LIMIT 5
+")
+```
+
+    ##   customer_id maxpayment minpayment avgpayment sumpayment
+    ## 1           1       2.99       0.99   1.990000       3.98
+    ## 2           2       4.99       4.99   4.990000       4.99
+    ## 3           3       2.99       1.99   2.490000       4.98
+    ## 4           5       6.99       0.99   3.323333       9.97
+    ## 5           6       4.99       0.99   2.990000       8.97
+
+## 7.2 do those calculations for each customer_id and save those for customers with more than 5 records
+
+``` r
+dbGetQuery(con,"
+SELECT customer_id,
+       COUNT(*)    AS  N,
+       MAX(amount) AS maxpayment,
+       MIN(amount) AS minpayment,
+       AVG(amount) AS avgpayment,
+       SUM(amount) AS sumpayment
+FROM payment
+GROUP BY customer_id 
+HAVING N>5
+")
+```
+
+    ##    customer_id N maxpayment minpayment avgpayment sumpayment
+    ## 1           19 6       9.99       0.99   4.490000      26.94
+    ## 2           53 6       9.99       0.99   4.490000      26.94
+    ## 3          109 7       7.99       0.99   3.990000      27.93
+    ## 4          161 6       5.99       0.99   2.990000      17.94
+    ## 5          197 8       3.99       0.99   2.615000      20.92
+    ## 6          207 6       6.99       0.99   2.990000      17.94
+    ## 7          239 6       7.99       2.99   5.656667      33.94
+    ## 8          245 6       8.99       0.99   4.823333      28.94
+    ## 9          251 6       4.99       1.99   3.323333      19.94
+    ## 10         269 6       6.99       0.99   3.156667      18.94
+    ## 11         274 6       5.99       2.99   4.156667      24.94
+    ## 12         371 6       6.99       0.99   4.323333      25.94
+    ## 13         506 7       8.99       0.99   4.132857      28.93
+    ## 14         596 6       6.99       0.99   3.823333      22.94
+
+``` r
 # clean up
 dbDisconnect(con)
 ```
