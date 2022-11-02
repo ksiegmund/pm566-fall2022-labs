@@ -317,6 +317,138 @@ LIMIT 10
     ## 9       16092         288        2       427   6.99 2007-01-27 14:38:30.996577
     ## 10      16094         288        2       565   5.99 2007-01-28 07:54:57.996577
 
+# Exercise 5
+
+Retrive all the payment IDs and their amount from the customers whose
+last name is ‘DAVIS’.
+
+``` r
+dbGetQuery(con,"
+      PRAGMA table_info(customer)
+")
+```
+
+    ##    cid        name    type notnull dflt_value pk
+    ## 1    0 customer_id INTEGER       0         NA  0
+    ## 2    1    store_id INTEGER       0         NA  0
+    ## 3    2  first_name    TEXT       0         NA  0
+    ## 4    3   last_name    TEXT       0         NA  0
+    ## 5    4       email    TEXT       0         NA  0
+    ## 6    5  address_id INTEGER       0         NA  0
+    ## 7    6  activebool    TEXT       0         NA  0
+    ## 8    7 create_date    TEXT       0         NA  0
+    ## 9    8 last_update    TEXT       0         NA  0
+    ## 10   9      active INTEGER       0         NA  0
+
+``` r
+dbGetQuery(con,"
+SELECT c.customer_id, c.last_name, p.payment_id, p.amount
+FROM customer AS c INNER JOIN payment AS p
+  ON c.customer_id = p.customer_id
+ WHERE c.last_name == 'DAVIS' 
+/* WHERE c.last_name == 'DAVIS' */  /* This is a comment*/
+  ")
+```
+
+    ##   customer_id last_name payment_id amount
+    ## 1           6     DAVIS      16685   4.99
+    ## 2           6     DAVIS      16686   2.99
+    ## 3           6     DAVIS      16687   0.99
+
+# Exercise 6
+
+## 6.1
+
+Count the number of records in rental
+
+``` r
+dbGetQuery(con,"
+SELECT  COUNT(*) AS count
+FROM  rental
+")
+```
+
+    ##   count
+    ## 1 16044
+
+## 6.2
+
+Use COUNT(\*) and GROUP BY to count the number of rentals for each
+customer_id
+
+``` r
+dbGetQuery(con,"
+SELECT  customer_id, COUNT(*) AS count
+FROM  rental
+GROUP BY customer_id
+LIMIT 8
+")
+```
+
+    ##   customer_id count
+    ## 1           1    32
+    ## 2           2    27
+    ## 3           3    26
+    ## 4           4    22
+    ## 5           5    38
+    ## 6           6    28
+    ## 7           7    33
+    ## 8           8    24
+
+## 6.3
+
+Sort in descending order
+
+``` r
+dbGetQuery(con,"
+SELECT  customer_id, COUNT(*) AS count
+FROM  rental
+GROUP BY customer_id
+ORDER BY count DESC
+LIMIT 8
+")
+```
+
+    ##   customer_id count
+    ## 1         148    46
+    ## 2         526    45
+    ## 3         236    42
+    ## 4         144    42
+    ## 5          75    41
+    ## 6         469    40
+    ## 7         197    40
+    ## 8         468    39
+
+## 6.4
+
+Repeat the previous query but use HAVING to only keep the groups with 40
+or more.
+
+``` r
+dbGetQuery(con,"
+SELECT  customer_id, COUNT(*) AS count
+FROM  rental
+GROUP BY customer_id
+HAVING count >= 40
+ORDER BY count DESC
+LIMIT 8
+")
+```
+
+    ##   customer_id count
+    ## 1         148    46
+    ## 2         526    45
+    ## 3         236    42
+    ## 4         144    42
+    ## 5          75    41
+    ## 6         469    40
+    ## 7         197    40
+
+# Exercise 7
+
+The following query calculates a number of summary statistics for the
+payment table using MAX, MIN, AVG and SUM
+
 ``` r
 # clean up
 dbDisconnect(con)
