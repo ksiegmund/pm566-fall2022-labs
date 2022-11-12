@@ -1,6 +1,6 @@
 ---
 title: "Lab 11 - Interactive Visualization"
-date: "11/09/2022"
+date: "11/11/2022"
 output: html_document
 link-citations: yes
 editor_options: 
@@ -393,7 +393,8 @@ plot_ly(x=colnames(cv_states_mat2), y=rownames(cv_states_mat2),
 pick.date = "2022-10-15"
 
 # Extract the data for each state by its abbreviation
-cv_per100 <- cv_states %>% filter(date==pick.date) %>%
+cv_per100 <- cv_states %>% 
+  filter(date==pick.date) %>%
   select(state, abb, newper100k, cases, deaths) # select data
 cv_per100$state_name <- cv_per100$state
 cv_per100$state <- cv_per100$abb
@@ -427,9 +428,9 @@ fig <- plot_geo(cv_per100, locationmode = 'USA-states') %>%
     colors = 'Purples'
   )
 fig <- fig %>% 
-  colorbar(title = paste0("Cases per 100k: ", pick.date), limits = c(0,shadeLimit))
-fig <- fig %>% layout(
-    title = paste('Cases per 100k by State as of ', pick.date, '<br>(Hover for value)'),
+  colorbar(title = "Cases per 100k", limits = c(0,shadeLimit))
+fig <- fig %>% 
+  layout(
     geo = set_map_details
   )
 fig_pick.date <- fig
@@ -438,7 +439,8 @@ fig_pick.date <- fig
 ### Map for today's date
 
 # Extract the data for each state by its abbreviation
-cv_per100 <- cv_states_today %>%  select(state, abb, newper100k, cases, deaths) # select data
+cv_per100 <- cv_states_today %>%  
+  select(state, abb, newper100k, cases, deaths) # select data
 cv_per100$state_name <- cv_per100$state
 cv_per100$state <- cv_per100$abb
 cv_per100$abb <- NULL
@@ -450,14 +452,6 @@ cv_per100$hover <- with(cv_per100,
             "Cases: ", cases, '<br>', 
             "Deaths: ", deaths))
 
-# Set up mapping details
-set_map_details <- list(
-  scope = 'usa',
-  projection = list(type = 'albers usa'),
-  showlakes = TRUE,
-  lakecolor = toRGB('white')
-)
-
 # Create the map
 fig <- plot_geo(cv_per100, locationmode = 'USA-states') %>% 
   add_trace(
@@ -467,18 +461,48 @@ fig <- plot_geo(cv_per100, locationmode = 'USA-states') %>%
     color = ~newper100k, 
     colors = 'Purples'
   )
-fig <- fig %>% colorbar(title = paste0("Cases per 100k: ", Sys.Date()), limits = c(0,shadeLimit))
+fig <- fig %>% 
+  colorbar(title = "Cases per 100k", limits = c(0,shadeLimit))
 fig <- fig %>% 
   layout(
-    title = paste('Cases per 100k by State as of', Sys.Date(), '<br>(Hover for value)'),
     geo = set_map_details
   )
 fig_Today <- fig
-
-
-### Plot together 
-subplot(fig_pick.date, fig_Today, nrows = 2, margin = .05)
-
 ```
 
+```{r}
+### Plot together 
+finalfig <- subplot(fig_pick.date, fig_Today, nrows = 2) %>% 
+  layout(showlegend = FALSE,
+         title = paste('Cases per 100k by State', 
+                       '<br>(Hover for value)'),
+         hovermode = TRUE
+         ) %>%
+  colorbar(title = "Cases per 100k", limits = c(0,shadeLimit))
 
+annotations = list( 
+  list( 
+    x = 0.5,
+    y = 0.5,
+    text = pick.date,  
+    xref = "paper",  
+    yref = "paper",  
+    xanchor = "center",  
+    yanchor = "bottom",  
+    showarrow = FALSE   
+  ),  
+  list( 
+    x = 0.5,
+    y = -0.05,
+    text = Sys.Date(),  
+    xref = "paper",  
+    yref = "paper",  
+    xanchor = "center",  
+    yanchor = "bottom",  
+    showarrow = FALSE 
+  ))
+finalfig <- finalfig %>%layout(annotations = annotations) 
+finalfig
+```
+
+Ideally, we would not repeat the colorbar twice.
